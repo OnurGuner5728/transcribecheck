@@ -39,7 +39,11 @@ export function parseTranscript(raw) {
   const units = [];
   const tagRegex = /(<utterance\b[^>]*>)([\s\S]*?)(<\/utterance\s*>)/gi;
   let match;
+  let firstUtteranceStart = -1;
+  let lastUtteranceEnd = -1;
   while ((match = tagRegex.exec(source)) !== null) {
+    if (firstUtteranceStart < 0) firstUtteranceStart = match.index;
+    lastUtteranceEnd = tagRegex.lastIndex;
     const text = stripMarkup(match[2]).trim();
     if (!text) continue;
     units.push({
@@ -50,7 +54,16 @@ export function parseTranscript(raw) {
     });
   }
   if (units.length) {
-    return { kind: 'xml', units, header: wrapper, footer: wrapper ? '</speaker_transcript>' : '', original: source };
+    const prefix = source.slice(0, firstUtteranceStart).trim();
+    const suffix = source.slice(lastUtteranceEnd).trim();
+    const safePrefix = /^(?:\s*<\?xml[^>]*>\s*)?(?:\s*<(?:speak|speaker_transcript)\b[^>]*>\s*)+$/i.test(prefix);
+    const safeSuffix = /^(?:\s*<\/(?:speaker_transcript|speak)\s*>\s*)+$/i.test(suffix);
+    return {
+      kind: 'xml', units,
+      header: safePrefix && safeSuffix ? prefix : wrapper,
+      footer: safePrefix && safeSuffix ? suffix : wrapper ? '</speaker_transcript>' : '',
+      original: source
+    };
   }
   // SRT: retain cue identifiers and timestamps without comparing them as spoken words.
   const cues = source.replace(/\r/g, '').split(/\n\s*\n/);
@@ -111,7 +124,7 @@ function canonical(norm, aliases) {
 function markedUnit(u, missing) {
   if (u.kind === 'utterance') {
     if (u.spokenCount === 0) return u.originalMarkup;
-    return missing.map(segment => `${u.openTag} ${escapeXml(segment)} </utterance>`).join('\n');
+    return `${u.openTag} ${missing.map(escapeXml).join(' … ')} </utterance>`;
   }
   return missing.join('\n');
 }

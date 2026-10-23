@@ -27,7 +27,7 @@ function stripMarkup(input) {
 }
 
 function attr(openTag, name) {
-  const escaped = name.replace(/[.*+?^${}()|[\]\]/g, '\$&');
+  const escaped = name;
   const match = openTag.match(new RegExp('\\b' + escaped + '\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\')', 'i'));
   return match?.[1] ?? match?.[2] ?? '';
 }

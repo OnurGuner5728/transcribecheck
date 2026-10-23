@@ -41,13 +41,31 @@ async function loadRemote(url, textOnly = false) {
   return new File([blob], name, { type: blob.type || 'application/octet-stream' });
 }
 
-function updateUnits() {
+function invalidateReport() {
+  if (state.running) {
+    if (state.worker) { state.worker.terminate(); state.worker = null; }
+    setRunning(false);
+    $('progressPanel').style.display = 'none';
+  }
+  if (state.result) {
+    state.result = null;
+    state.parsed = null;
+    $('resultSection').style.display = 'none';
+    showToast('Kaynak değişti. Önceki analiz gizlendi; güncel metin ve ses için yeniden analiz yapın.');
+  }
+}
+
+function updateUnits(initial = false) {
+  if (!initial) invalidateReport();
   const raw = $('transcriptInput').value.trim();
   if (!raw) { $('unitCount').textContent = 'Metin henüz girilmedi'; return; }
   try {
     const parsed = parseTranscript(raw);
     const total = parsed.units.reduce((n, u) => n + u.text.split(/\s+/).length, 0);
-    $('unitCount').textContent = parsed.units.length + ' bölüm · yaklaşık ' + total + ' sözcük · ' + (parsed.kind === 'xml' ? 'XML' : parsed.kind.toUpperCase());
+    const ids = new Set(parsed.units.map(u => u.id));
+    const duplicateCount = parsed.kind === 'xml' ? parsed.units.length - ids.size : 0;
+    $('unitCount').textContent = parsed.units.length + ' bölüm · yaklaşık ' + total + ' sözcük · ' + (parsed.kind === 'xml' ? 'XML' : parsed.kind.toUpperCase())
+      + (duplicateCount ? ' · ⚠ ' + duplicateCount + ' yinelenen utterance ID (tam kaynak metin mi?)' : '');
   } catch {
     $('unitCount').textContent = 'Transkript okunamadı';
   }
@@ -56,6 +74,7 @@ $('transcriptInput').addEventListener('input', updateUnits);
 
 function setAudio(file) {
   if (!file) return;
+  invalidateReport();
   if (state.audioObjectUrl) URL.revokeObjectURL(state.audioObjectUrl);
   state.audio = file;
   state.audioObjectUrl = URL.createObjectURL(file);
@@ -67,6 +86,7 @@ function setAudio(file) {
   showToast('Ses dosyası hazır: ' + file.name);
 }
 function removeAudio() {
+  invalidateReport();
   if (state.audioObjectUrl) URL.revokeObjectURL(state.audioObjectUrl);
   state.audio = null;
   state.audioObjectUrl = null;
@@ -119,8 +139,8 @@ $('loadDemo').addEventListener('click', () => {
     + '<utterance id="109" timestamp="11:25 - 11:28" emotion="emphatic, slow pace"> Bu, cepheye girmek anlamına gelmiyordu. </utterance>\n'
     + '<utterance id="24" timestamp="02:18 - 02:25" emotion="strong, emphatic, slow pace"> Roosevelt\\\'e göre Adana\\\'da bin sekiz yüz kamyon vaat edilmiştir. Yalnız sekiz yüzü teslim edilmiştir. </utterance>\n'
     + '</speaker_transcript>';
-  $('recognizedOverride').value = 'Bu cepheye girmek anlamına gelmiyordu. Rozveltte göre Adanada bin sekiz yüz kamyon vaat edilmiştir.';
   updateUnits();
+  $('recognizedOverride').value = 'Bu cepheye girmek anlamına gelmiyordu. Rozveltte göre Adanada bin sekiz yüz kamyon vaat edilmiştir.';
   if (!$('advancedDetails').classList.contains('open')) $('advancedToggle').click();
   showToast('Örnek metin ve örnek Whisper çıktısı yüklendi. “Metni karşılaştır” ile sonucu inceleyin.');
 });
@@ -351,4 +371,7 @@ $('downloadJson').addEventListener('click', () => {
     })), asrText: r.recognizedText, extraWords: r.extra
   }, null, 2), 'application/json;charset=utf-8');
 });
-updateUnits();
+$('modelSelect').addEventListener('change', invalidateReport);
+$('aliasInput').addEventListener('input', invalidateReport);
+$('recognizedOverride').addEventListener('input', invalidateReport);
+updateUnits(true);

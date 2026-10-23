@@ -110,7 +110,7 @@ function canonical(norm, aliases) {
 
 function markedUnit(u, missing) {
   if (u.kind === 'utterance') {
-    if (missing.length === u.tokens.length) return u.originalMarkup;
+    if (u.spokenCount === 0) return u.originalMarkup;
     return missing.map(segment => `${u.openTag} ${escapeXml(segment)} </utterance>`).join('\n');
   }
   return missing.join('\n');

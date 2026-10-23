@@ -129,15 +129,22 @@ export function compareTranscript(parsed, recognizedText, manualAliases = '') {
   const changes = diffArrays(reference, observed, {
     comparator: (a, b) => a.key === b.key
   });
-  let extra = [];
-  let lastRemoved = [];
+  const extra = [];
+  let refPos = 0;
+  let obsPos = 0;
   for (const change of changes) {
     if (change.added) {
-      extra.push(...change.value.map(w => w.text));
+      extra.push(...observed.slice(obsPos, obsPos + change.value.length).map(w => w.text));
+      obsPos += change.value.length;
     } else if (change.removed) {
-      lastRemoved = change.value;
+      refPos += change.value.length;
     } else {
-      for (const t of change.value) t.status = 'spoken';
+      for (let i = 0; i < change.value.length; i++) {
+        reference[refPos + i].status = 'spoken';
+        reference[refPos + i].heardAt = observed[obsPos + i]?.at ?? null;
+      }
+      refPos += change.value.length;
+      obsPos += change.value.length;
     }
   }
   let spoken = 0;

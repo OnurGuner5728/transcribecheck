@@ -70,7 +70,7 @@ function updateUnits(initial = false) {
     $('unitCount').textContent = 'Transkript okunamadı';
   }
 }
-$('transcriptInput').addEventListener('input', updateUnits);
+$('transcriptInput').addEventListener('input', () => updateUnits());
 
 function setAudio(file) {
   if (!file) return;

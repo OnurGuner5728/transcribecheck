@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a1020" />
+  <meta name="description" content="TranscribeCheck: Whisper ile seslendirmeyi transkriptle karşılaştırın. Atlanan sözcükleri, utterance etiketleriyle birlikte bulun." />
+  <title>TranscribeCheck — Seslendirme kalite kontrolü</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { font-family:"DM Sans",sans-serif; color:#edf3ff; background:#0a1020; font-synthesis:none; text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased; }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-width:320px;min-height:100vh;background:radial-gradient(ellipse 52% 34% at 88% -6%,#1f3a63aa,transparent 72%),radial-gradient(ellipse 58% 38% at 0% 6%,#154a55aa,transparent 72%),#0a1020}
+    a{color:inherit;text-decoration:none}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.45}input,textarea,select{outline:none}
+    .shell{max-width:1190px;margin:auto;padding:0 28px}.topbar{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff13}.logo{display:flex;align-items:center;gap:12px;font-family:"Space Grotesk";font-size:22px;font-weight:700;letter-spacing:-.8px}.logo-mark{height:39px;width:39px;display:grid;place-items:center;color:#071720;background:#57e5ce;border-radius:13px;box-shadow:0 0 28px #57e5ce30}.top-right{display:flex;align-items:center;gap:21px;font-size:12px;color:#a2b1c8}.top-right a:hover,.foot a:hover{color:#62ecd5}.privacy{display:flex;align-items:center;gap:7px;background:#11332f;color:#78e9c6;border:1px solid #245f4e;border-radius:100px;padding:8px 12px;font-weight:700}
+    .hero{padding:73px 0 46px;text-align:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;color:#8ee7d7;background:#143438;border:1px solid #27555d;padding:8px 14px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:.4px}.pulse{width:7px;height:7px;border-radius:100px;background:#71f9cf;box-shadow:0 0 0 4px #71f9cf23}.hero h1{font-family:"Space Grotesk",sans-serif;font-size:clamp(37px,5vw,60px);font-weight:700;letter-spacing:-2.6px;line-height:1.1;margin:23px 0 16px}.hero h1 span{color:#71e5d1}.hero p{max-width:670px;color:#9eacc4;line-height:1.7;margin:0 auto;font-size:15px}
+    .workspace{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.panel{border:1px solid #283450;border-radius:19px;background:linear-gradient(135deg,#18233a,#121c31);padding:24px;min-width:0;box-shadow:0 16px 44px #0000001f}
+    .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:22px}.panel-head-main{display:flex;gap:13px}.index{display:grid;place-items:center;background:#254f50;color:#74efdb;width:33px;height:33px;flex:none;border-radius:11px;font-weight:800;font-size:13px}.index.purple{background:#38305a;color:#b9a6ff}.panel h2{font-family:"Space Grotesk";font-size:19px;letter-spacing:-.45px;margin:1px 0 5px}.sub{color:#8c9cb5;font-size:12px}.mini-btn{border:1px solid #38475e;background:#233046;color:#c9d6e8;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:700}.mini-btn:hover{border-color:#65cfc0;color:#fff}
+    .control-label{display:block;color:#bccae0;font-size:12px;font-weight:700;margin:0 0 10px}.field{background:#0c1629;color:#edf3ff;border:1px solid #33415b;border-radius:11px;padding:12px 13px;width:100%;transition:border-color .2s}.field:focus{border-color:#5ce1d0;box-shadow:0 0 0 3px #5ce1d01b}.field::placeholder{color:#63748f}textarea.field{height:259px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.75}.row{display:flex;align-items:center;gap:10px;min-width:0}.row>.field{min-width:0;flex:1}.row .mini-btn{flex:none}.section-line{display:flex;align-items:center;gap:12px;margin:18px 0;color:#6f829f;font-size:11px}.section-line:before,.section-line:after{content:"";height:1px;flex:1;background:#314059}.meta-line{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#879cb5;font-size:11px;margin-top:10px}.file-input{display:none}.upload-link{border:1px dashed #455775;border-radius:10px;background:#19263c;color:#d1dfef;font-size:12px;padding:12px 13px;text-align:center;display:flex;gap:10px;align-items:center;justify-content:center;cursor:pointer;transition:.2s}.upload-link:hover,.dropzone.dragging{border-color:#68dfcf;background:#1d383d}.upload-link svg,.dropzone svg{flex:none}
+    .dropzone{border:1.5px dashed #455879;border-radius:13px;min-height:183px;background:#101c31;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.2s;padding:22px;text-align:center}.dropzone:hover{border-color:#70e8d7;background:#142a36}.upload-circle{height:48px;width:48px;background:#26364d;border-radius:16px;display:grid;place-items:center;color:#92e8dd}.dropzone b{font-size:14px}.dropzone span{font-size:11px;color:#8293aa}.supported{margin-top:4px;background:#202f44;border-radius:50px;padding:7px 10px;color:#9fb0c8;font-size:10px;letter-spacing:.6px;font-weight:700}
+    .audio-summary{display:none;align-items:center;gap:10px;padding:12px 14px;border:1px solid #345c5b;background:#173a3b;border-radius:11px;margin-top:15px;overflow:hidden}.audio-summary strong{font-size:12px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.audio-summary small{font-size:11px;color:#a8b8c7}.audio-summary audio{width:100%;height:32px;margin-top:8px}.audio-info{min-width:0;flex:1}
+    .config{border:1px solid #293750;background:#121c30;border-radius:17px;padding:22px 25px;margin-top:18px;display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap}.config-l{display:flex;align-items:center;gap:12px}.config-icon{display:grid;place-items:center;width:39px;height:39px;background:#2d3654;color:#a9c0ff;border-radius:12px}.config h3{font-family:"Space Grotesk";font-size:15px;margin:0 0 5px}.config p{font-size:11px;color:#91a4bd;margin:0}.config-r{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.select{background:#1e2c44;border:1px solid #435474;border-radius:9px;padding:11px;color:#e4ebf8;font-weight:700;font-size:12px}.advanced{display:inline-block;border:0;background:transparent;color:#8edbda;font-size:12px;font-weight:700;padding:8px 0}.advanced:hover{text-decoration:underline}
+    .details{background:#111b2e;border:1px solid #2b3a51;border-radius:12px;margin-top:12px;padding:15px 20px;display:none}.details.open{display:block}.details textarea{height:76px}.detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}.details p{color:#91a4bd;font-size:11px;line-height:1.6;margin:8px 0 12px}
+    .actions{display:flex;gap:13px;align-items:center;justify-content:center;padding:28px 0 33px}.primary{border:0;background:#66e7d4;color:#07242b;border-radius:11px;box-shadow:0 8px 30px #58ebd326;font-size:14px;font-weight:800;padding:16px 29px;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .2s,background .2s}.primary:hover{background:#93f9e5;transform:translateY(-1px)}.primary:disabled:hover{transform:none}.secondary{border:1px solid #526179;color:#c4d2e6;background:#1a263a;border-radius:11px;padding:15px 21px;font-size:12px;font-weight:700}.secondary:hover{border-color:#79e4d7}
+    .notice{display:flex;gap:10px;align-items:flex-start;color:#8fa0b7;font-size:11px;line-height:1.6;max-width:710px;margin:0 auto 32px}.notice svg{flex:none;margin-top:1px;color:#77c6cd}
+    .progress-panel{border:1px solid #3f6471;border-radius:17px;background:#182c3b;margin:5px 0 30px;padding:23px;display:none}.progress-heading{display:flex;justify-content:space-between;gap:10px;align-items:center}.progress-heading strong{font-size:14px}.progress-heading small{font-size:12px;color:#84decf}.progress-track{height:9px;background:#2b4456;border-radius:100px;overflow:hidden;margin:15px 0 10px}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#43bba9,#88f1d9);border-radius:100px;transition:width .4s}.progress-panel p{color:#9daec4;font-size:12px;margin:0}
+    .results{display:none;padding-bottom:40px}.result-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:5px 0 18px}.result-heading h2{font-family:"Space Grotesk";font-size:26px;letter-spacing:-1px;margin:0}.result-heading p{font-size:12px;color:#95a7be;margin:6px 0 0}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}.metric{padding:20px;border:1px solid #2b3c55;background:#17233a;border-radius:14px}.metric b{display:block;font-family:"Space Grotesk";font-size:32px;letter-spacing:-1px;margin:7px 0 2px}.metric small{color:#91a5be;font-size:11px}.metric .good{color:#73e7c6}.metric .warn{color:#ffbb77}.metric .pink{color:#ff889e}
+    .result-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.result-panel{background:#152139;border:1px solid #2a3951;border-radius:17px;min-width:0;padding:21px}.result-panel h3{font-family:"Space Grotesk";font-size:16px;margin:0 0 7px}.result-panel p{color:#93a7c0;font-size:12px;line-height:1.65;margin:0 0 18px}.unit-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.unit-list{max-height:650px;overflow-y:auto;padding-right:5px}.unit{background:#101b2e;border:1px solid #2d405b;border-radius:12px;padding:15px;margin-bottom:11px}.unit-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:11px}.unit-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11px;color:#9aabc2}.unit-id{color:#70dcd0;font-weight:800}.status{padding:5px 8px;border-radius:7px;font-size:10px;font-weight:800;background:#4d3037;color:#ff9a9e}.status.partial{background:#493d2b;color:#ffd08b}.status.complete{background:#1c473f;color:#6ce4c6}.unit-text{line-height:1.9;font-size:13px;color:#e6eef9}.miss{color:#ffb4ae;background:#67333c5c;border-radius:4px;padding:2px 1px;border-bottom:1px solid #fa9798}.unit-footer{color:#f5aca1;font-size:11px;margin-top:11px;line-height:1.6}.result-panel pre{border:1px solid #30445c;background:#0b1527;color:#bad7d7;padding:16px;font:11px/1.8 ui-monospace,Consolas,monospace;white-space:pre-wrap;overflow:auto;max-height:460px;border-radius:12px;word-break:break-word}.export-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:15px}.export{font-size:11px;border:1px solid #405570;background:#233650;color:#e4eef6;border-radius:8px;padding:9px 11px;font-weight:700}.export:hover{background:#34516a}.good-empty{text-align:center;padding:30px;color:#77ddc5}.recognized{margin-top:19px;border-top:1px solid #304158;padding-top:16px}.recognized summary{cursor:pointer;font-size:12px;font-weight:700;color:#c6d5e7}.recognized p{margin:12px 0;color:#b4c0d1}
+    .foot{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;color:#647993;font-size:11px;border-top:1px solid #ffffff17;padding:22px 0 30px}.muted{color:#86a1b6}.toast{position:fixed;bottom:24px;right:24px;z-index:4;background:#e6f7f3;color:#183739;border-radius:11px;padding:12px 18px;font-size:12px;box-shadow:0 12px 40px #0006;display:none;max-width:420px}.hide{display:none!important}
+    @media(max-width:850px){.workspace,.result-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.hero{padding:54px 0 32px}.top-right .nav{display:none}.config{align-items:stretch}.panel{padding:19px}.result-panel{padding:17px}.detail-cols{grid-template-columns:1fr}}
+    @media(max-width:530px){.shell{padding:0 16px}.topbar{height:70px}.logo{font-size:20px}.privacy{font-size:10px}.hero h1{letter-spacing:-1.6px}.panel-head{flex-wrap:wrap}.config-r{width:100%}.config-r .select{flex:1}.actions{flex-wrap:wrap}.actions .primary{flex:1}.metric{padding:15px}.metric b{font-size:28px}.result-heading h2{font-size:23px}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="logo" href="#" aria-label="TranscribeCheck ana sayfa">
+        <span class="logo-mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 10v4m4-7v10m4-15v20m4-14v8m4-12v16m4-10v4"/></svg></span>
+        Transcribe<span style="color:#77e9d6;margin-left:-12px">Check</span>
+      </a>
+      <div class="top-right"><a class="nav" href="#how-it-works">Nasıl çalışır?</a><a class="nav" href="https://github.com/OnurGuner5728/transcribecheck" target="_blank" rel="noopener">GitHub ↗</a><div class="privacy"><span class="pulse"></span> Yerel &amp; gizli analiz</div></div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow"><span class="pulse"></span> WHISPER DESTEKLİ SESLENDİRME KONTROLÜ</div>
+      <h1>Her kelime söylendi mi?<br /><span>Eksikleri anında gör.</span></h1>
+      <p>Transkriptini ve ses kaydını ekle. Whisper söylenenleri çıkarsın; atlanan kelimeleri, cümleleri ve XML etiketlerini kaybetmeden raporlasın.</p>
+    </section>
+
+    <section class="workspace" aria-label="Dosyaları hazırla">
+      <article class="panel">
+        <div class="panel-head">
+          <div class="panel-head-main"><span class="index">01</span><div><h2>Orijinal transkript</h2><div class="sub">Referans metnini yapıştır veya içeri aktar</div></div></div>
+          <button class="mini-btn" id="loadDemo" type="button">Örnek metin</button>
+        </div>
+        <label class="control-label" for="transcriptInput">Transkript metni / XML / utterance</label>
+        <textarea class="field" id="transcriptInput" spellcheck="false" placeholder='&lt;speaker_transcript speaker="Anlatıcı"&gt;
+  &lt;utterance id="109" timestamp="11:25 - 11:28" emotion="emphatic"&gt;
+    Bu, cepheye girmek anlamına gelmiyordu.
+  &lt;/utterance&gt;
+&lt;/speaker_transcript&gt;'></textarea>
+        <div class="meta-line"><span id="unitCount">Metin henüz girilmedi</span><span>Etiketler otomatik algılanır</span></div>
+        <div class="section-line">VEYA DOSYADAN</div>
+        <label class="upload-link" for="transcriptFile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V3m0 0 5 5m-5-5L7 8M4 17v4h16v-4"/></svg> Transkript dosyası seç (.txt, .xml, .srt, .md, .json)</label>
+        <input id="transcriptFile" class="file-input" type="file" accept=".txt,.xml,.srt,.md,.json,text/plain,text/xml" />
+        <div class="section-line">VEYA BAĞLANTIDAN</div>
+        <div class="row"><input class="field" id="transcriptUrl" type="url" placeholder="GitHub / raw metin dosyası bağlantısı" /><button class="mini-btn" id="fetchTranscript" type="button">Getir</button></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><div class="panel-head-main"><span class="index purple">02</span><div><h2>Ses kaynağı</h2><div class="sub">İncelenecek seslendirmeyi yükle</div></div></div></div>
+        <label class="dropzone" id="audioDrop" for="audioFile">
+          <span class="upload-circle"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 15v5h14v-5"/></svg></span>
+          <b>Ses dosyasını buraya sürükle</b>
+          <span>ya da bilgisayarından dosya seçmek için tıkla</span>
+          <span class="supported">WAV · MP3 · M4A · OGG · FLAC*</span>
+        </label>
+        <input id="audioFile" class="file-input" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac,.mp4" />
+        <div class="audio-summary" id="audioSummary"><span style="font-size:25px">♫</span><div class="audio-info"><strong id="audioName">Ses dosyası</strong><small id="audioSize">Hazır</small><audio controls id="audioPlayer" preload="metadata"></audio></div><button class="mini-btn" id="removeAudio" type="button" aria-label="Sesi kaldır">✕</button></div>
+        <div class="section-line">VEYA BAĞLANTIDAN</div>
+        <label class="control-label" for="audioUrl">Doğrudan ses URL'si veya GitHub dosyası</label>
+        <div class="row"><input class="field" id="audioUrl" type="url" placeholder="https://.../seslendirme.wav" /><button class="mini-btn" type="button" id="fetchAudio">Yükle</button></div>
+        <p class="muted" style="font-size:11px;line-height:1.7;margin:20px 0 0">*Desteklenen biçimler tarayıcının ses çözme yeteneklerine bağlıdır. GitHub bağlantılarında doğrudan dosya veya public raw adresi gereklidir. YouTube izleme sayfası bağlantıları doğrudan desteklenmez.</p>
+      </article>
+    </section>
+
+    <div class="config" id="how-it-works">
+      <div class="config-l"><div class="config-icon">⚙</div><div><h3>Analiz ayarları</h3><p>Türkçe · Whisper modeli · Tarayıcın üzerinden çalışır</p></div></div>
+      <div class="config-r"><select id="modelSelect" class="select" aria-label="Whisper modeli"><option value="onnx-community/whisper-tiny">Whisper Tiny · hızlı</option><option value="onnx-community/whisper-base" selected>Whisper Base · dengeli</option><option value="onnx-community/whisper-small">Whisper Small · detaylı</option></select><button class="advanced" id="advancedToggle" type="button" aria-expanded="false">Gelişmiş seçenekler ▾</button></div>
+    </div>
+    <div class="details" id="advancedDetails">
+      <div class="detail-cols">
+        <div><label class="control-label" for="aliasInput">Özel telaffuz eşleştirmeleri</label><textarea class="field" id="aliasInput" placeholder="Churchill=Çörçil, Roosevelt=Rozvelt"></textarea><p>Transkript içindeki “Telaffuz:” notları ayrıca otomatik okunur. Virgülle ayrılmış karşılıkları gir.</p></div>
+        <div><label class="control-label" for="recognizedOverride">Hazır Whisper çıktısı (isteğe bağlı)</label><textarea class="field" id="recognizedOverride" placeholder="Daha önce Whisper ile çıkardığın ses metnini buraya yapıştır."></textarea><p>Yalnızca hazır ASR metniyle test yapmak için “Metni karşılaştır”ı kullan. Ses dosyası gerekmez.</p><button class="mini-btn" id="compareText" type="button">Metni karşılaştır</button></div>
+      </div>
+    </div>
+
+    <div class="actions"><button class="primary" id="startBtn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m8 5 11 7-11 7z"/></svg> Analizi başlat</button><button class="secondary hide" id="cancelBtn" type="button">İptal et</button></div>
+
+    <div class="progress-panel" id="progressPanel" role="status" aria-live="polite"><div class="progress-heading"><strong id="progressTitle">Hazırlanıyor…</strong><small id="progressPercent">0%</small></div><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><p id="progressMessage">Ses işleniyor.</p></div>
+
+    <div class="notice"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 3 7v5c0 5 3.5 8.5 9 9 5.5-.5 9-4 9-9V7l-9-4Z"/><path d="M9 12l2 2 4-4"/></svg><span>Ses dosyası analiz için sunucuya yüklenmez; Whisper modeli ilk kullanımda internetten indirilip tarayıcıda çalıştırılır. İlk açılış uzun sürebilir. Sonuçlar yapay zekâ tahminidir; özellikle özel isimler, sayılar ve benzer cümlelerde kontrol önerilir.</span></div>
+
+    <section class="results" id="resultSection">
+      <div class="result-heading"><div><h2>Analiz raporu</h2><p id="reportSummary">Seslendirmeyle metin karşılaştırıldı.</p></div><button class="secondary" id="newCheck" type="button">Yeni kontrol ↑</button></div>
+      <div class="metrics">
+        <div class="metric"><small>Kelime eşleşmesi</small><b class="good" id="metricCoverage">—</b><small>Whisper tahminine göre</small></div>
+        <div class="metric"><small>Eşleşen kelime</small><b id="metricSpoken">—</b><small>Referans transkript</small></div>
+        <div class="metric"><small>Eksik / farklı kelime</small><b class="pink" id="metricMissing">—</b><small>Tekrar gözden geçirilmeli</small></div>
+        <div class="metric"><small>Etkilenen bölümler</small><b class="warn" id="metricUnits">—</b><small id="metricUnitsHint">Kısmen veya tamamen eksik</small></div>
+      </div>
+      <div class="result-grid">
+        <article class="result-panel">
+          <h3>Bölüm bölüm karşılaştırma</h3><p>Kırmızıyla vurgulanan ifadeler Whisper çıktısında eşleşmedi. Etiket, bölüm kimliği ve varsa zaman bilgisi korunur.</p>
+          <div class="unit-toolbar"><select class="select" id="resultFilter" aria-label="Sonuç filtresi"><option value="issues">Sadece eksikler</option><option value="all">Tüm bölümler</option><option value="missing">Tamamen eksikler</option><option value="partial">Kısmi eksikler</option><option value="complete">Tam okunanlar</option></select><small class="muted" id="visibleCount"></small></div>
+          <div class="unit-list" id="unitList"></div>
+        </article>
+        <article class="result-panel">
+          <h3>Yeniden seslendirilecek metin</h3><p>Eksik kısımlar, orijinal <code>utterance</code> etiketleri ve XML nitelikleriyle dışa aktarılır. Kısmen eksik bölümlerde yalnızca eşleşmeyen ifade içeride kalır.</p>
+          <div class="export-row"><button class="export" id="copyXml" type="button">Kopyala</button><button class="export" id="downloadXml" type="button">XML / TXT ↓</button><button class="export" id="downloadCsv" type="button">CSV ↓</button><button class="export" id="downloadJson" type="button">JSON ↓</button></div>
+          <pre id="missingOutput"></pre>
+          <details class="recognized"><summary>Whisper'ın duyduğu tam metni göster</summary><p id="recognizedOutput"></p></details>
+          <details class="recognized"><summary>Kaynakta bulunmayan okunan kelimeleri göster</summary><p id="extraOutput"></p></details>
+        </article>
+      </div>
+    </section>
+    <footer class="foot"><div>© 2026 TranscribeCheck · Ücretsiz, tarayıcıda çalışan ses kontrolü</div><a href="https://github.com/OnurGuner5728/transcribecheck" target="_blank" rel="noopener">Açık kaynak · GitHub ↗</a></footer>
+  </div>
+  <div class="toast" id="toast" aria-live="polite"></div>
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>

@@ -44,3 +44,19 @@ test('export csv with ids', () => {
   assert.match(makeCSV(r), /109/);
   assert.equal(r.spoken, 0);
 });
+
+test('preserves a nested speak and speaker_transcript root on missing export', () => {
+  const xml = '<speak xml:lang="tr-TR"><speaker_transcript speaker="Anlatıcı" role="Narrator"><utterance id="3" emotion="urgent">Bir iki üç.</utterance></speaker_transcript></speak>';
+  const result = compareTranscript(parseTranscript(xml), 'Bir');
+  assert.match(result.missingXml, /^<speak xml:lang="tr-TR">/);
+  assert.match(result.missingXml, /<\/speaker_transcript><\/speak>$/);
+  assert.match(result.missingXml, /<utterance id="3" emotion="urgent">/);
+});
+
+test('does not repeat one utterance id when several pieces were missed', () => {
+  const source = '<speaker_transcript speaker="Narrator"><utterance id="17" timestamp="01:00" emotion="calm">Bir iki üç dört beş altı.</utterance></speaker_transcript>';
+  const result = compareTranscript(parseTranscript(source), 'iki dört altı');
+  assert.equal(result.units[0].status, 'partial');
+  assert.equal((result.missingXml.match(/<utterance id="17"/g) || []).length, 1);
+  assert.match(result.missingXml, /Bir … üç … beş/);
+});

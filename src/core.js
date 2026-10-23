@@ -1,14 +1,14 @@
 import { diffArrays } from 'diff';
 
-const WORDS = /[\\p{L}\\p{N}]+(?:['’][\\p{L}\\p{N}]+)*/gu;
+const WORDS = /[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu;
 const escapeXml = value => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 export function normalizeWord(word) {
   return String(word || '')
     .toLocaleLowerCase('tr-TR')
-    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/ı/g, 'i').replace(/æ/g, 'ae').replace(/œ/g, 'oe')
-    .replace(/['’\\u2019]/g, '').replace(/[^a-z0-9]/g, '');
+    .replace(/['’\u2019]/g, '').replace(/[^a-z0-9]/g, '');
 }
 
 export function tokenize(text) {
@@ -27,17 +27,17 @@ function stripMarkup(input) {
 }
 
 function attr(openTag, name) {
-  const escaped = name.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
-  const match = openTag.match(new RegExp('\\\\b' + escaped + '\\\\s*=\\\\s*(?:"([^"]*)"|\\'([^\\']*)\\')', 'i'));
+  const escaped = name.replace(/[.*+?^${}()|[\]\]/g, '\$&');
+  const match = openTag.match(new RegExp('\\b' + escaped + '\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\')', 'i'));
   return match?.[1] ?? match?.[2] ?? '';
 }
 
 export function parseTranscript(raw) {
-  const source = String(raw || '').replace(/^\\uFEFF/, '').trim();
+  const source = String(raw || '').replace(/^\uFEFF/, '').trim();
   if (!source) throw new Error('Önce bir transkript ekleyin.');
-  const wrapper = source.match(/<speaker_transcript\\b[^>]*>/i)?.[0] || '';
+  const wrapper = source.match(/<speaker_transcript\b[^>]*>/i)?.[0] || '';
   const units = [];
-  const tagRegex = /(<utterance\\b[^>]*>)([\\s\\S]*?)(<\\/utterance\\s*>)/gi;
+  const tagRegex = /(<utterance\b[^>]*>)([\s\S]*?)(<\/utterance\s*>)/gi;
   let match;
   while ((match = tagRegex.exec(source)) !== null) {
     const text = stripMarkup(match[2]).trim();
@@ -53,10 +53,10 @@ export function parseTranscript(raw) {
     return { kind: 'xml', units, header: wrapper, footer: wrapper ? '</speaker_transcript>' : '', original: source };
   }
   // SRT: retain cue identifiers and timestamps without comparing them as spoken words.
-  const cues = source.replace(/\\r/g, '').split(/\\n\\s*\\n/);
+  const cues = source.replace(/\r/g, '').split(/\n\s*\n/);
   if (cues.length && cues.some(block => /-->/.test(block))) {
     for (const cue of cues) {
-      const lines = cue.split('\\n').filter(Boolean);
+      const lines = cue.split('\n').filter(Boolean);
       const timeIdx = lines.findIndex(line => /-->/.test(line));
       if (timeIdx < 0) continue;
       const text = stripMarkup(lines.slice(timeIdx + 1).join(' ')).trim();
@@ -65,7 +65,7 @@ export function parseTranscript(raw) {
     }
     if (units.length) return { kind: 'srt', units, header: '', footer: '', original: source };
   }
-  const paragraphs = source.split(/\\n\\s*\\n/).flatMap(p => p.split(/(?<=[.!?…])\\s+(?=[\\p{Lu}0-9])/u))
+  const paragraphs = source.split(/\n\s*\n/).flatMap(p => p.split(/(?<=[.!?…])\s+(?=[\p{Lu}0-9])/u))
     .map(s => stripMarkup(s).trim()).filter(Boolean);
   for (const text of paragraphs) {
     units.push({ id: String(units.length + 1), timestamp: '', emotion: '', text, kind: 'plain', index: units.length });
@@ -75,14 +75,14 @@ export function parseTranscript(raw) {
 
 export function buildAliases(source, manual = '') {
   const pairStrings = [];
-  for (const found of String(source).matchAll(/Telaffuz\\s*:\\s*([^".\\n]+)/gi)) {
+  for (const found of String(source).matchAll(/Telaffuz\s*:\s*([^".\n]+)/gi)) {
     pairStrings.push(found[1]);
   }
   if (manual.trim()) pairStrings.push(manual);
   const alias = new Map();
   for (const text of pairStrings) {
-    for (const item of text.split(/[,;\\n]/)) {
-      const m = item.match(/^\\s*([^=]+?)\\s*=\\s*([^=]+?)\\s*$/);
+    for (const item of text.split(/[,;\n]/)) {
+      const m = item.match(/^\s*([^=]+?)\s*=\s*([^=]+?)\s*$/);
       if (!m) continue;
       const a = tokenize(m[1]), b = tokenize(m[2]);
       if (a.length !== b.length || !a.length) continue;
@@ -111,9 +111,9 @@ function canonical(norm, aliases) {
 function markedUnit(u, missing) {
   if (u.kind === 'utterance') {
     if (missing.length === u.tokens.length) return u.originalMarkup;
-    return missing.map(segment => `${u.openTag} ${escapeXml(segment)} </utterance>`).join('\\n');
+    return missing.map(segment => `${u.openTag} ${escapeXml(segment)} </utterance>`).join('\n');
   }
-  return missing.join('\\n');
+  return missing.join('\n');
 }
 
 export function compareTranscript(parsed, recognizedText, manualAliases = '') {
@@ -154,7 +154,7 @@ export function compareTranscript(parsed, recognizedText, manualAliases = '') {
       if (!group.length) return;
       let text = unit.text.slice(group[0].start, group[group.length - 1].end);
       const after = unit.text.slice(group[group.length - 1].end);
-      const punctuation = after.match(/^[\\s]*[.,!?;:…]+/u);
+      const punctuation = after.match(/^[\s]*[.,!?;:…]+/u);
       if (punctuation) text += punctuation[0].trimEnd();
       spans.push({ text: text.trim(), from: group[0].start, to: group[group.length - 1].end });
       group = [];
@@ -170,9 +170,9 @@ export function compareTranscript(parsed, recognizedText, manualAliases = '') {
     unit.outputMarkup = markedUnit(unit, spans.map(s => s.text));
   }
   const missingUnits = units.filter(u => u.status !== 'complete');
-  const snippets = missingUnits.map(u => u.outputMarkup).filter(Boolean).join('\\n');
+  const snippets = missingUnits.map(u => u.outputMarkup).filter(Boolean).join('\n');
   const missingXml = parsed.kind === 'xml' && parsed.header
-    ? `${parsed.header}\\n${snippets}\\n${parsed.footer}`
+    ? `${parsed.header}\n${snippets}\n${parsed.footer}`
     : snippets;
   return {
     units, observed, extra, spoken, missing, total: reference.length,
@@ -193,8 +193,8 @@ export function formatTime(seconds) {
 
 export function makeCSV(result) {
   const quote = s => '"' + String(s ?? '').replace(/"/g, '""') + '"';
-  return '\\uFEFF' + [
+  return '\uFEFF' + [
     ['ID', 'Zaman', 'Durum', 'Kelimeler', 'Okunan', 'Eksik metin', 'Orijinal metin'].map(quote).join(','),
     ...result.units.map(u => [u.id, u.timestamp, u.status, u.tokens.length, u.spokenCount, u.missingText, u.text].map(quote).join(','))
-  ].join('\\r\\n');
+  ].join('\r\n');
 }
